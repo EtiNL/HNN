@@ -22,9 +22,13 @@ class HomogeneousNN(nn.Module):
 
         self.alpha, self.beta = compute_alpha_beta(Gd, P)
 
-        if is_diagonalizable(Gd):
+        if torch.allclose(Gd, torch.diag(torch.diagonal(Gd)), atol=1e-6):
+            self.Gd_is_diagonal = True
+            self.lam = torch.diagonal(Gd)
+
+        elif is_diagonalizable(Gd):
             device = Gd.device
-            self.Gd_diag = True
+            self.Gd_diagonalizable = True
             eigvals, eigvecs = torch.linalg.eig(Gd)
             self.V = eigvecs.to(device)
             self.V_inv = torch.linalg.inv(self.V).to(device)
@@ -47,12 +51,17 @@ class HomogeneousNN(nn.Module):
         """
         # Solve for s in batch
         #S = batch_bisection_solve(self.Gd, self.P, x, self.alpha, self.beta)#.detach()  # shape = (batch_size,)
-
-        if self.Gd_diag:
+        if self.Gd_is_diagonal:
             with torch.no_grad():
-                S = batch_bisection_solve_diag(self.lam, self.V, self.V_inv, self.P, x, self.alpha, self.beta, tol=1e-4, max_iter=1000)
+                S = batch_bisection_solve_diag(self.lam, self.P, x, self.alpha, self.beta, tol=1e-4, max_iter=1000)
 
-            x_sphere = dilation_batch_diag(self.lam, self.V, self.V_inv, -S, x)
+            x_sphere = dilation_batch_diag(self.lam, -S, x)
+            
+        elif self.Gd_diagonalizable:
+            with torch.no_grad():
+                S = batch_bisection_solve_diag([self.lam, self.V, self.V_inv], self.P, x, self.alpha, self.beta, tol=1e-4, max_iter=1000)
+
+            x_sphere = dilation_batch_diag([self.lam, self.V, self.V_inv], -S, x)
 
         else:
             with torch.no_grad():

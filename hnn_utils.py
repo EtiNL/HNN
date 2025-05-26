@@ -125,13 +125,24 @@ def dilation_batch(Gd, S, X):
     # Apply the matrix exponential to each vector in X (bmm = batch matrix multiplication)
     return torch.bmm(exp_matrices, X.unsqueeze(-1)).squeeze(-1)  # Shape (batch_size, n)
 
-def dilation_batch_diag(lam, V, V_inv, S, X):
+def dilation_batch_diag(lam_or_triplet, S, X):
+    """
+    Apply anisotropic dilation d(s) = exp(Gd * s) to batch of vectors X.
+    Supports:
+        - lam: if Gd is diagonal
+        - [lam, V, V_inv]: if Gd is diagonalizable
+    """
+    if isinstance(lam_or_triplet, list) or isinstance(lam_or_triplet, tuple):
+        lam, V, V_inv = lam_or_triplet
+        exp_lam = torch.exp(lam[None, :] * S[:, None])  # (B, n)
+        exp_diag = torch.diag_embed(exp_lam)            # (B, n, n)
+        exp_matrices = (V[None, ...] @ exp_diag @ V_inv[None, ...]).real  # (B, n, n)
+        return torch.bmm(exp_matrices, X.unsqueeze(-1)).squeeze(-1)
+    else:
+        lam = lam_or_triplet
+        exp_lam = torch.exp(lam[None, :] * S[:, None])  # (B, n)
+        return X * exp_lam
 
-    exp_lam = torch.exp(lam[None, :] * S[:, None])  # (B, n)
-    exp_matrices = (V[None, ...] @ torch.diag_embed(exp_lam) @ V_inv[None, ...]).real  # (B,n,n)
-    X_out = (torch.bmm(exp_matrices, X.unsqueeze(-1)).squeeze(-1))
-    
-    return X_out
 
 def compute_alpha_beta(Gd, P):
     """
@@ -234,32 +245,24 @@ def batch_bisection_solve(Gd, P, X, alpha, beta, tol=1e-6, max_iter=100):
     # Return final midpoint
     return 0.5 * (s_min + s_max)
 
-def batch_bisection_solve_diag(lam, V, V_inv, P, X, alpha, beta, tol=1e-6, max_iter=100):
+
+def batch_bisection_solve_diag(lam_or_triplet, P, X, alpha, beta, tol=1e-6, max_iter=100):
     """
-    Parallel bisection to solve:
-      norm_P( dilation(Gd, -s, x_i), P ) ≈ 1
-    for all samples x_i in X, simultaneously on the GPU.
+    Solve for s such that norm_P(d(-s)(x)) ≈ 1 using bisection.
+    Supports:
+        - lam: if Gd is diagonal
+        - [lam, V, V_inv]: if Gd is diagonalizable
 
-    Gd   : (n, n)
-    P    : (n, n)
-    X    : (B, n)
-    alpha: scalar
-    beta : scalar
-    tol  : float
-    max_iter : int
-
-    Returns : (B,) solutions s_i for each x_i
+    Returns: (B,) tensor of s values
     """
     device = X.device
 
-    # (B,) - compute norm of each sample
+    # (B,) - norm of each sample
     norms_X = norm_P_batch(X, P)
 
-    # The original code: a = norm_x^(1/alpha), b = norm_x^(1/beta)
     a = norms_X ** (1.0 / alpha)
     b = norms_X ** (1.0 / beta)
 
-    # s_min, s_max = log(min(a,b)), log(max(a,b)) for each element
     s_min = torch.log(torch.minimum(a, b)).to(device)
     s_max = torch.log(torch.maximum(a, b)).to(device)
 
@@ -275,29 +278,22 @@ def batch_bisection_solve_diag(lam, V, V_inv, P, X, alpha, beta, tol=1e-6, max_i
     # if any(norms_max > 1):
     #     raise ValueError("Issue with s_max for some sample; norms_max > 1.")
 
-    # We'll do a batch bisection update
     for _ in range(max_iter):
-        # (B,)
         s_mid = 0.5 * (s_min + s_max)
 
-        # Compute norm of d(-s_mid)(X)
-        ds_mid = dilation_batch_diag(lam, V, V_inv, -s_mid, X)  # (B, n)
-        norm_ds_mid = norm_P_batch(ds_mid, P)   # (B,)
+        ds_mid = dilation_batch_diag(lam_or_triplet, -s_mid, X)
 
-        # mask: True if norm_ds_mid < 1 -> we move s_max downward
+        norm_ds_mid = norm_P_batch(ds_mid, P)
+
         mask = norm_ds_mid < 1.0
-
-        # in-place updates
         s_max[mask] = s_mid[mask]
         s_min[~mask] = s_mid[~mask]
 
-        # Check convergence: if the difference is small for all
-        # you can also do it elementwise: if (s_max - s_min).max() < tol -> break
         if (s_max - s_min).max() < tol:
             break
 
-    # Return final midpoint
     return 0.5 * (s_min + s_max)
+
 
 def initialize_weights(m):
     if isinstance(m, nn.Linear):
