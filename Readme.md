@@ -24,8 +24,8 @@ Anisotropic homogeneous neural network with dilation ( d(s)=\exp(G_d s) ). For e
 
 ## Features
 
-* Enforces anisotropic homogeneity of degree (\nu) via explicit rescaling.
-* Batch bisection solver for (s) in generic, diagonal, and diagonalizable cases.
+* Enforces anisotropic homogeneity of degree $\nu$ via explicit rescaling.
+* Batch bisection solver for $s$ in generic, diagonal, and diagonalizable cases.
 * Device-aware matrix exponential paths.
 * Plotting helpers for heatmaps and MSE vs dilation.
 * Simple homogeneity tests for a model or a target function.
@@ -129,12 +129,12 @@ s, mse_h, mse_m, theory = plot_mse_vs_dilation_on_test_loader(
 
 ## Mathematical notes
 
-* Dilation: ( d(s) = \exp(G_d s) \in \mathbb{R}^{n\times n} ).
-* P-norm: ( |x|_P = \sqrt{x^\top P x} ) with (P \succ 0).
-* Normalization step: find (s) s.t. (|d(-s) x|_P = 1). Solve by batch bisection.
-* Model output: ( f(x) = g(,d(-s)x,), \exp(\nu s) ), where (g) is an MLP on the d-sphere.
-* Conditions enforced at init: (P \succ 0) and (P G_d + G_d^\top P \succ 0). These imply positive bounds for the bisection interval via `compute_alpha_beta`.
-* `compute_alpha_beta`: constructs ( S = P^{1/2} G_d P^{-1/2} + P^{-1/2} G_d^\top P^{1/2} ), sets (\alpha = \tfrac{\lambda_{\max}(S)}{2}), (\beta = \tfrac{\lambda_{\min}(S)}{2}).
+* Dilation: $ d(s) = \exp(G_d s) \in \mathbb{R}^{n\times n} $.
+* P-norm: $ |x|_P = \sqrt{x^\top P x} $ with $P \succ 0$.
+* Normalization step: find $s$ s.t. $|d(-s) x|_P = 1$. Solve by batch bisection.
+* Model output: $ f(x) = g(,d(-s)x,), \exp(\nu s) $, where $g$ is an MLP on the d-sphere.
+* Conditions enforced at init: $P \succ 0$ and $P G_d + G_d^\top P \succ 0$. These imply positive bounds for the bisection interval via `compute_alpha_beta`.
+* `compute_alpha_beta`: constructs $ S = P^{1/2} G_d P^{-1/2} + P^{-1/2} G_d^\top P^{1/2} $, sets $\alpha = \tfrac{\lambda_{\max}(S)}{2}$, $\beta = \tfrac{\lambda_{\min}(S)}{2}$.
 
 ## API
 
