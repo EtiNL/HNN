@@ -1,6 +1,6 @@
 # HomogeneousNN (anisotropic dilation)
 
-Anisotropic homogeneous neural network with dilation $d(s)=\exp(G_d s)$. For each input $x$, the model solves $\|d(-s)x\|_P=1$, evaluates an MLP on the resulting "d-sphere," then rescales the output by $\exp(\nu s)$.
+Anisotropic homogeneous neural network with dilation $d(s)=\exp(G_d s)$. For each input $x$, the model solves $||d(-s)x||_P=1$, evaluates an MLP on the resulting "d-sphere," then rescales the output by $\exp(\nu s)$.
 
 ---
 
