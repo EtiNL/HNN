@@ -53,7 +53,7 @@ Requirements:
 Install with pip:
 
 ```bash
-pip install torch numpy matplotlib
+pip install -r requirements.txt
 ```
 
 ## Quick start
