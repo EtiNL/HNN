@@ -209,19 +209,6 @@ def batch_bisection_solve(Gd, P, X, alpha, beta, tol=1e-6, max_iter=100):
     s_min = torch.log(torch.minimum(a, b)).to(device)
     s_max = torch.log(torch.maximum(a, b)).to(device)
 
-    # Optional: check the initial bounds:
-    # We'll do the same logic as in your code, but in batch form
-    # ds_min = dilation_batch(Gd, -s_min, X)   # shape (B, n)
-    # norms_min = norm_P_batch(ds_min, P)      # shape (B,)
-    # if any(norms_min < 1):
-    #     raise ValueError("Issue with s_min for some sample; norms_min < 1.")
-    #
-    # ds_max = dilation_batch(Gd, -s_max, X)
-    # norms_max = norm_P_batch(ds_max, P)
-    # if any(norms_max > 1):
-    #     raise ValueError("Issue with s_max for some sample; norms_max > 1.")
-
-    # We'll do a batch bisection update
     for _ in range(max_iter):
         # (B,)
         s_mid = 0.5 * (s_min + s_max)
@@ -238,7 +225,6 @@ def batch_bisection_solve(Gd, P, X, alpha, beta, tol=1e-6, max_iter=100):
         s_min[~mask] = s_mid[~mask]
 
         # Check convergence: if the difference is small for all
-        # you can also do it elementwise: if (s_max - s_min).max() < tol -> break
         if (s_max - s_min).max() < tol:
             break
 
@@ -265,18 +251,6 @@ def batch_bisection_solve_diag(lam_or_triplet, P, X, alpha, beta, tol=1e-6, max_
 
     s_min = torch.log(torch.minimum(a, b)).to(device)
     s_max = torch.log(torch.maximum(a, b)).to(device)
-
-    # Optional: check the initial bounds:
-    # We'll do the same logic as in your code, but in batch form
-    # ds_min = dilation_batch(Gd, -s_min, X)   # shape (B, n)
-    # norms_min = norm_P_batch(ds_min, P)      # shape (B,)
-    # if any(norms_min < 1):
-    #     raise ValueError("Issue with s_min for some sample; norms_min < 1.")
-    #
-    # ds_max = dilation_batch(Gd, -s_max, X)
-    # norms_max = norm_P_batch(ds_max, P)
-    # if any(norms_max > 1):
-    #     raise ValueError("Issue with s_max for some sample; norms_max > 1.")
 
     for _ in range(max_iter):
         s_mid = 0.5 * (s_min + s_max)
