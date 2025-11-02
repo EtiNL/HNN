@@ -2,6 +2,21 @@
 
 Anisotropic homogeneous neural network with dilation $d(s)=\exp(G_d s)$. For each input $x$, the model solves $||d(-s)x||_P=1$, evaluates an MLP on the resulting "d-sphere," then rescales the output by $\exp(\nu s)$.
 
+## Citation and acknowledgments
+
+This project builds on the article **“Homogeneous Artificial Neural Network”** by **Andrey Polyakov** (arXiv:2311.17973).
+
+Primary references:
+- Polyakov, A. “Homogeneous Artificial Neural Network.” 2023. [arXiv](https://arxiv.org/abs/2311.17973)
+- Polyakov, A. *Generalized Homogeneity in Systems and Control*. Springer, 2020. [SpringerLink](https://link.springer.com/book/10.1007/978-3-030-38449-4)
+
+Original project (matlab):
+- **Homogeneous Artificial Neural Networks** GitLab repository. [gitlab.inria.fr/polyakov/homogeneous-artificial-neural-networks](https://gitlab.inria.fr/polyakov/homogeneous-artificial-neural-networks)
+
+Provenance:
+- Developed during my **M1 research project and internship at CRIStAL (Université de Lille)** with **Andrey Polyakov** and **Mihály Petreczky**.
+
+
 ---
 
 ## Contents
@@ -42,13 +57,6 @@ Anisotropic homogeneous neural network with dilation $d(s)=\exp(G_d s)$. For eac
 ```
 
 ## Install
-
-Requirements:
-
-* Python ≥ 3.9
-* PyTorch ≥ 2.1
-* NumPy ≥ 1.24
-* Matplotlib ≥ 3.7
 
 Install with pip:
 
