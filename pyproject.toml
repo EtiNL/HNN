@@ -1,0 +1,25 @@
+[project]
+name = "homogeneous-nn"
+version = "0.1.0"
+description = "Anisotropic homogeneous neural network implementation with PyTorch."
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+authors = [{ name = "Etienne Lanzeray" }]
+
+dependencies = [
+    "torch>=2.0",
+    "numpy>=1.24",
+    "matplotlib>=3.7",
+]
+
+[build-system]
+requires = ["setuptools>=65.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["*"]
