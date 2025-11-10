@@ -3,5 +3,4 @@ jupyter
 matplotlib
 pandas
 pillow
-matplotlib
 scikit-learn
