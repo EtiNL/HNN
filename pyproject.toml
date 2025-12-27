@@ -1,5 +1,5 @@
 [project]
-name = "homogeneous-nn"
+name = "homogeneous_nn"
 version = "0.1.0"
 description = "Anisotropic homogeneous neural network implementation with PyTorch."
 readme = "README.md"
