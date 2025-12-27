@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-from hnn_utils import check_Gd_P_conditions, compute_alpha_beta, batch_bisection_solve, batch_bisection_solve_diag, dilation_batch, dilation_batch_diag, is_diagonalizable
+from homogeneous_nn.hnn_utils import check_Gd_P_conditions, compute_alpha_beta, batch_bisection_solve, batch_bisection_solve_diag, dilation_batch, dilation_batch_diag, is_diagonalizable
 
 class HomogeneousNN(nn.Module):
     """

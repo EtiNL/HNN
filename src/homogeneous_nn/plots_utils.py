@@ -1,14 +1,5 @@
-import torch
-import numpy as np
-import matplotlib.pyplot as plt
-from matplotlib.colors import SymLogNorm
-from hnn_utils import batch_bisection_solve, batch_bisection_solve_diag, is_diagonalizable, compute_alpha_beta, dilation_batch_diag
+from homogeneous_nn.hnn_utils import batch_bisection_solve, batch_bisection_solve_diag, is_diagonalizable, compute_alpha_beta, dilation_batch_diag
 
-
-import numpy as np
-import torch
-import matplotlib.pyplot as plt
-from matplotlib.colors import LogNorm, SymLogNorm, Normalize
 
 import numpy as np
 import torch
