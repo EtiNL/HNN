@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-from homogeneous_nn.hnn_utils import check_Gd_P_conditions, compute_alpha_beta, batch_bisection_solve, batch_bisection_solve_diag, dilation_batch, dilation_batch_diag, is_diagonalizable
+from hnn_utils import check_Gd_P_conditions, compute_alpha_beta, batch_bisection_solve, batch_bisection_solve_diag, dilation_batch, dilation_batch_diag, is_diagonalizable
 
 class HomogeneousNN(nn.Module):
     """
@@ -8,7 +8,7 @@ class HomogeneousNN(nn.Module):
     We find s for each sample so that d(-s)(x) is on the unit 'd-sphere',
     then pass that to an MLP, and finally scale output by exp(nu * s).
     """
-    def __init__(self, input_dim, hidden_dim, output_dim, P, Gd, nu, hidden_layers = 1):
+    def __init__(self, input_dim, hidden_dim, P, Gd, nu, hidden_layers = 1, is_field = False):
         """
         """
         super().__init__()
@@ -16,6 +16,7 @@ class HomogeneousNN(nn.Module):
         self.nu = nu
         self.Gd = Gd
         self.P = P
+        self.is_field = is_field
 
         if not check_Gd_P_conditions(Gd, P):
            raise Exception('Gd P conditions not satisfied')
@@ -35,6 +36,11 @@ class HomogeneousNN(nn.Module):
             self.lam = eigvals.to(device)
 
         # MLP that acts on the "d-sphere"
+        if is_field:
+            output_dim = input_dim
+        else:
+            output_dim = 1
+
         layers = [nn.Linear(input_dim, hidden_dim), nn.Tanh()]
         for _ in range(hidden_layers - 1):
             layers.extend([nn.Linear(hidden_dim, hidden_dim), nn.Tanh()])
@@ -54,19 +60,16 @@ class HomogeneousNN(nn.Module):
         if self.Gd_is_diagonal:
             with torch.no_grad():
                 S = batch_bisection_solve_diag(self.lam, self.P, x, self.alpha, self.beta, tol=1e-4, max_iter=1000)
-
             x_sphere = dilation_batch_diag(self.lam, -S, x)
             
         elif self.Gd_diagonalizable:
             with torch.no_grad():
                 S = batch_bisection_solve_diag([self.lam, self.V, self.V_inv], self.P, x, self.alpha, self.beta, tol=1e-4, max_iter=1000)
-
             x_sphere = dilation_batch_diag([self.lam, self.V, self.V_inv], -S, x)
 
         else:
             with torch.no_grad():
                 S = batch_bisection_solve(self.Gd, self.P, x, self.alpha, self.beta, tol=1e-4, max_iter=1000)
-
             x_sphere = dilation_batch(self.Gd, -S, x)
         
         # Pass x_sphere into the MLP
@@ -75,8 +78,10 @@ class HomogeneousNN(nn.Module):
         with torch.no_grad():
             # Finally, scale the output by exp(nu * s)
             scale_up = torch.exp(self.nu * S).unsqueeze(-1)  # shape=(batch_size,1)
-            
-        out = mlp_out * scale_up
+        if self.is_field:
+            out = scale_up * dilation_batch(self.Gd, S, mlp_out)
+        else:
+            out = scale_up * mlp_out
 
         return out
 
