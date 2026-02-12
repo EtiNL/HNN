@@ -29,11 +29,15 @@ class HomogeneousNN(nn.Module):
 
         elif is_diagonalizable(Gd):
             device = Gd.device
+            self.Gd_is_diagonal = False
             self.Gd_diagonalizable = True
             eigvals, eigvecs = torch.linalg.eig(Gd)
             self.V = eigvecs.to(device)
             self.V_inv = torch.linalg.inv(self.V).to(device)
             self.lam = eigvals.to(device)
+        
+        else:
+            self.Gd_diagonalizable = False
 
         # MLP that acts on the "d-sphere"
         if is_field:
