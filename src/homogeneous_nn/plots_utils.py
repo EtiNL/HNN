@@ -1,4 +1,4 @@
-from hnn_utils import batch_bisection_solve, batch_bisection_solve_diag, is_diagonalizable, compute_alpha_beta, dilation_batch_diag
+from homogeneous_nn.hnn_utils import batch_bisection_solve, batch_bisection_solve_diag, is_diagonalizable, compute_alpha_beta, dilation_batch_diag
 
 
 import numpy as np
