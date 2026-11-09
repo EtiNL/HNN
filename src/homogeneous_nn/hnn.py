@@ -191,7 +191,7 @@ class HomogeneousNN(nn.Module):
         # 5) scale back (outside no_grad: d/dx of exp(nu S) and d(S) are needed in the Jacobian)
         scale_up = torch.exp(self.nu * S).unsqueeze(-1)  # shape=(batch_size,1)
         if self.is_field:
-            out = scale_up * dilation_batch(self.Gd, S, mlp_out)
+            out = scale_up * self._dilate(S, mlp_out)   # cheapest form of exp(S Gd)
         else:
             out = scale_up * mlp_out
 
