@@ -278,7 +278,7 @@ def initialize_weights(m):
 
 def is_diagonalizable(Gd, tol=1e-6):
     # 1) calcul des valeurs propres (complexes) et vecteurs propres
-    eigvals, eigvecs = torch.linalg.eig(Gd)
+    eigvals, eigvecs = torch.linalg.eig(Gd.to(torch.float64))
     n = Gd.shape[0]
     # regrouper par valeur propre (avec tolérance)
     uniq_vals = []
@@ -290,10 +290,14 @@ def is_diagonalizable(Gd, tol=1e-6):
     for λ in uniq_vals:
         # multiplicité algébrique
         alg_mult = int((torch.isclose(eigvals, λ, atol=tol)).sum().item())
-        # multiplicité géométrique = dimension du noyau de (Gd - λ I)
-        M = Gd - λ.real * torch.eye(n, device=Gd.device)
-        # on utilise svd ou rank pour estimer dim ker
-        rank_M = torch.linalg.matrix_rank(M, tol=tol)
+        # multiplicité géométrique = dimension du noyau de (Gd - λ I), λ complexe.
+        # (Avant : Gd - Re(λ) I, faux dès que λ n'est pas réel ; pour Gd = I/2 + antisymétrique
+        #  cela renvoyait "non diagonalisable" quand K ≡ 0 mod 4, cf. diagnostic B5b.)
+        Gc = Gd.to(torch.complex128)
+        M = Gc - λ.to(torch.complex128) * torch.eye(n, device=Gd.device, dtype=torch.complex128)
+        # on utilise svd ou rank pour estimer dim ker (tolérance relative à la taille de Gd)
+        scale = max(1.0, torch.linalg.matrix_norm(Gc, ord=2).item())
+        rank_M = torch.linalg.matrix_rank(M, atol=tol * scale)
         geo_mult = n - rank_M
         if geo_mult < alg_mult:
             return False
